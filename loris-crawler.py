@@ -7,7 +7,7 @@ from pathlib import Path
 import requests
 import getpass
 
-# command example:  python3 loris-crawler.py   --dataset ./test  --api-base https://phantom-dev.loris.ca/api/v0.0.3
+# command example:  python3 loris-crawler.py   --dataset ./test  --api-base https://phantom-dev.loris.ca/api/v0.0.3 --get
 # =========================
 # 0. get params
 # =========================
