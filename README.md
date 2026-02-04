@@ -7,7 +7,7 @@ Designed for research workflows:
 - Multi-project ingestion
 - Incremental (safe to re-run)
 - git-annex–managed large files
-
+- Optional immediate download (`--get`)
 ---
 
 ## 📦 Installation
