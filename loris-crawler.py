@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 import os
 import csv
 import argparse
@@ -7,7 +8,6 @@ from pathlib import Path
 import requests
 import getpass
 
-# command example:  python3 loris-crawler.py   --dataset ./test  --api-base https://phantom-dev.loris.ca/api/v0.0.3 --get
 # =========================
 # 0. get params
 # =========================
@@ -16,7 +16,7 @@ parser = argparse.ArgumentParser(
 )
 parser.add_argument("--dataset", required=True, help="Path to DataLad dataset")
 parser.add_argument(
-    "--api-base",
+    "--api-base", 
     required=True,
     help="Phantom API base, e.g. https://phantom.loris.ca/api/v0.0.3-dev",
 )
@@ -32,15 +32,12 @@ API_BASE = args.api_base.rstrip("/")
 # =========================
 USERNAME = os.environ.get("LORIS_USERNAME")
 PASSWORD = os.environ.get("LORIS_PASSWORD")
-
 if not USERNAME:
     USERNAME = input("Loris username: ")
-
 if not PASSWORD:
     PASSWORD = getpass.getpass("Loris password: ")
 
 print(" Logging in to Loris API...")
-
 login_resp = requests.post(
     f"{API_BASE}/login",
     json={
@@ -50,11 +47,9 @@ login_resp = requests.post(
 )
 login_resp.raise_for_status()
 login_json = login_resp.json()
-
 TOKEN = login_json.get("token")
 if not TOKEN:
     raise RuntimeError(" Login succeeded but no token returned")
-
 print("Login successful")
 
 HEADERS = {
@@ -85,7 +80,6 @@ subprocess.run(
     cwd=DATASET_DIR,
     check=True,
 )
-
 env = os.environ.copy()
 env["GIT_ANNEX_URL_AUTHORIZATION"] = f"Bearer {TOKEN}"
 
@@ -105,11 +99,9 @@ if MANIFEST_OUT.exists():
 print("Fetching project list...")
 proj_resp = requests.get(f"{API_BASE}/projects", headers=HEADERS)
 proj_resp.raise_for_status()
-
 projects = proj_resp.json().get("Projects", {})
 if not projects:
     raise RuntimeError("No projects returned by API")
-
 project_names = sorted(projects.keys())
 print(f"Found projects: {', '.join(project_names)}")
 
@@ -120,7 +112,6 @@ def bids_path(img):
     subj = f"sub-{img['Candidate']}"
     ses = f"ses-{img['Visit']}"
     scan = img["ScanType"].lower()
-
     if scan.startswith("t1"):
         modality, suffix = "anat", "T1w"
     elif scan.startswith("t2"):
@@ -131,14 +122,12 @@ def bids_path(img):
         modality, suffix = "dwi", "dwi"
     else:
         modality, suffix = "misc", scan
-
     bids_dir = Path(subj) / ses / modality
     bids_name = f"{subj}_{ses}_{suffix}.mnc"
-
     return bids_dir / bids_name, modality
 
 # =========================
-# 7. CSV write 
+# 7. CSV write
 # =========================
 write_header = not MANIFEST_OUT.exists()
 MANIFEST_OUT.parent.mkdir(parents=True, exist_ok=True)
@@ -163,47 +152,39 @@ if write_header:
 # =========================
 for project in project_names:
     print(f"\n Fetching images for project: {project}")
-
     resp = requests.get(
         f"{API_BASE}/projects/{project}/images",
         headers=HEADERS,
     )
     resp.raise_for_status()
     images = resp.json().get("Images", [])
-
     print(f" {project}: {len(images)} images")
-
+    
     for img in images:
         url = API_BASE + img["Link"]
         rel_target, modality = bids_path(img)
-
-        # Project namespace (important)
-        target = Path(project) / rel_target
-
+        
+        # 修复：去除重复的 loris/ 前缀
+        target = Path("data") / project / rel_target
         if str(target) in existing_files:
             print(f" Already registered: {target}")
             continue
-
+            
         (DATASET_DIR / target.parent).mkdir(parents=True, exist_ok=True)
-
-        print("   Registering addurl:")
-        print("   Project:", project)
-        print("   URL    :", url)
-        print("   Target :", target)
-
+        print(" Registering addurl:")
+        print(" Project:", project)
+        print(" URL :", url)
+        print(" Target :", target)
+        
         subprocess.run(
             [
-                "git", "annex", "addurl",
-                url,
-                "--file", str(target),
-                "--fast",
-                "--relaxed",
+                "git", "annex", "addurl", url, "--file", str(target), "--fast", "--relaxed",
             ],
             cwd=DATASET_DIR,
             env=env,
             check=True,
         )
-
+        
         writer.writerow({
             "project": project,
             "candidate": img["Candidate"],
@@ -213,9 +194,8 @@ for project in project_names:
             "target_path": str(target),
             "url": url,
         })
-
         existing_files.add(str(target))
-
+        
         if args.get:
             print(" downloading", target)
             subprocess.run(
@@ -231,15 +211,17 @@ f_out.close()
 # =========================
 subprocess.run(
     [
-        "datalad", "save",
-        "-m", "Ingest Loris images via API (multi-project, BIDS, incremental)",
+        "datalad", "save", "-m", "Ingest Loris images via API (multi-project, BIDS, incremental)",
     ],
     cwd=DATASET_DIR,
     check=True,
 )
 
 print("\n Done")
-if not args.get:
-    print("  To download files later, run:")
-    print(f" cd {DATASET_DIR} folder then run 'datalad get loris/sub-963271/ses-MNI_SCAN1_20101125/anat/sub-963271_ses-MNI_SCAN1_20101125_T1w.mnc'")
 
+print(f"\nDataset created at: {DATASET_DIR}")
+print("Files have been registered in git-annex")
+if not args.get:
+    print("To download files, run:")
+    print(f"  cd {DATASET_DIR}")
+    print(f"  datalad get <file-path>")
