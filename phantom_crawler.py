@@ -10,7 +10,7 @@ import getpass
 import sys
 
 # =========================
-# 0. (Args)  use: python3 phantom-crawler.py --dataset ./dataset --api-base https://phantom.loris.ca/api/v0.0.3
+# 0. (Args)  use: python3 phantom_crawler.py --dataset ./dataset --api-base https://phantom.loris.ca/api/v0.0.3
 # =========================
 parser = argparse.ArgumentParser(description="LORIS → DataLad/Git-annex (STABLE BATCH MODE)")
 parser.add_argument("--dataset", required=True)
