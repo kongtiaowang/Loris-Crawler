@@ -110,7 +110,7 @@ print(f"Generated manifest with {new_entries} images at {MANIFEST}")
 # =========================
 print("\nIngesting URLs into Git-annex via Stream Pipe...")
 
-# 开启 git annex addurl 的 batch 管道流
+# git annex addurl 
 process = subprocess.Popen(
     ["git", "annex", "addurl", "--batch", "--with-files", "--fast", "--relaxed"],
     cwd=DATASET_DIR,
