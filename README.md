@@ -158,7 +158,7 @@ step 1: #run
    python3 phantom_crawler.py --dataset ./testdata --api-base https://phantom.loris.ca/api/v0.0.3
 step 2: #push to a repo
  cd testdata   
- git remote add origin https://github.com/yourname/yourrepo.git"
+ git remote add origin https://github.com/yourname/yourrepo.git
  git push -u origin main
  datalad push --to origin
 step 3: # testing datalad get files
