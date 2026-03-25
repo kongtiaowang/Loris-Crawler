@@ -40,11 +40,14 @@ HEADERS = {"Authorization": f"Bearer {TOKEN}"}
 print("Login OK")
 
 # =========================
-# 2. DataLad  (Init)
+# 2. DataLad  (Init) 
 # =========================
 if not (DATASET_DIR / ".datalad").exists():
     print(f"Creating DataLad dataset at {DATASET_DIR}...")
     subprocess.run(["datalad", "create", "-c", "text2git", str(DATASET_DIR)], check=True)
+    
+    print("Ensuring default branch is 'main'...")
+    subprocess.run(["git", "branch", "-M", "main"], cwd=DATASET_DIR, check=True)
 
 print("Setting annex security configs...")
 subprocess.run(
@@ -52,6 +55,7 @@ subprocess.run(
     cwd=DATASET_DIR,
     check=True
 )
+
 
 # =========================
 # 3. BIDS
@@ -110,7 +114,6 @@ print(f"Generated manifest with {new_entries} images at {MANIFEST}")
 # =========================
 print("\nIngesting URLs into Git-annex via Stream Pipe...")
 
-# git annex addurl 
 process = subprocess.Popen(
     ["git", "annex", "addurl", "--batch", "--with-files", "--fast", "--relaxed"],
     cwd=DATASET_DIR,
@@ -137,7 +140,7 @@ if args.get:
     subprocess.run(["datalad", "get", "."], cwd=DATASET_DIR)
 
 # =========================
-# 7. (Save & Sync)
+# 7. (Save & Sync) 
 # =========================
 print("\nSaving dataset changes to Git/DataLad...")
 subprocess.run(
@@ -148,13 +151,16 @@ subprocess.run(
 
 print("\nSyncing git-annex branch...")
 subprocess.run(
-    ["git", "annex", "sync"],
+    ["git", "annex", "sync", "--no-push"], 
     cwd=DATASET_DIR,
     check=True
 )
 
 print("\n ALL DONE!")
-print("go to GitHub create a new repo：")
-print(f"cd {DATASET_DIR}")
-print("git remote add origin https://github.com/yourname/yourrepo.git")
-print("datalad push --to origin")
+print("--------------------------------------------------")
+print("To push to GitHub, run these commands manually:")
+print(f"  cd {DATASET_DIR}")
+print("  git remote add origin https://github.com/yourname/yourrepo.git")
+print("  git push -u origin main")  
+print("  datalad push --to origin")
+print("--------------------------------------------------")
