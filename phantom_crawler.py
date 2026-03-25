@@ -40,13 +40,12 @@ HEADERS = {"Authorization": f"Bearer {TOKEN}"}
 print("Login OK")
 
 # =========================
-# 2. DataLad  (Init) - 修复分支名称
+# 2. DataLad  (Init) 
 # =========================
 if not (DATASET_DIR / ".datalad").exists():
     print(f"Creating DataLad dataset at {DATASET_DIR}...")
     subprocess.run(["datalad", "create", "-c", "text2git", str(DATASET_DIR)], check=True)
     
-    # 强制将本地默认分支重命名为 main，防止旧版本 Git 默认使用 master
     print("Ensuring default branch is 'main'...")
     subprocess.run(["git", "branch", "-M", "main"], cwd=DATASET_DIR, check=True)
 
@@ -141,7 +140,7 @@ if args.get:
     subprocess.run(["datalad", "get", "."], cwd=DATASET_DIR)
 
 # =========================
-# 7. (Save & Sync) - 修复同步和 GitHub 引导
+# 7. (Save & Sync) 
 # =========================
 print("\nSaving dataset changes to Git/DataLad...")
 subprocess.run(
@@ -152,16 +151,16 @@ subprocess.run(
 
 print("\nSyncing git-annex branch...")
 subprocess.run(
-    ["git", "annex", "sync", "--no-push"], # 防止它在没配 origin 的时候报错
+    ["git", "annex", "sync", "--no-push"], 
     cwd=DATASET_DIR,
     check=True
 )
 
-print("\n✅ ALL DONE!")
+print("\n ALL DONE!")
 print("--------------------------------------------------")
 print("To push to GitHub, run these commands manually:")
 print(f"  cd {DATASET_DIR}")
 print("  git remote add origin https://github.com/yourname/yourrepo.git")
-print("  git push -u origin main") # 👈 关键点：这一步显式把 main 设置为默认分支
-print("  datalad push --to origin") # 👈 推送大文件元数据和 annex 分支
+print("  git push -u origin main")  
+print("  datalad push --to origin")
 print("--------------------------------------------------")
