@@ -144,3 +144,16 @@ datalad get PROJECT/sub-963271/ses-MNI_SCAN1_20101125/anat/sub-963271_ses-MNI_SC
 Download everything:
 
 datalad get .
+==============================================================
+phantom_crawler :
+step 1: #run  
+   python3 phantom_crawler.py --dataset ./testdata --api-base https://phantom.loris.ca/api/v0.0.3
+step 2: #push to a repo
+ cd testdata   
+ git remote add origin https://github.com/yourname/yourrepo.git")
+ git push -u origin main"
+ datalad push --to origin"
+step 3: # test to datalad
+  datalad install https://github.com/yourname/yourrepo.git
+  cd phantom-test
+  datalad get *
