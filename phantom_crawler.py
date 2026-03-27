@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import os
-import csv
 import argparse
 import subprocess
 from pathlib import Path
@@ -10,7 +9,7 @@ import getpass
 import sys
 
 # =========================
-# 0. Arguments and Path Setup      use: python3 phantom_crawler.py --dataset ./dataset --api-base https://phantom.loris.ca/api/v0.0.3
+# 0. Arguments and Path Setup
 # =========================
 parser = argparse.ArgumentParser(description="LORIS → DataLad/Git-annex (STABLE BATCH MODE)")
 parser.add_argument("--dataset", required=True, help="Path to the local DataLad dataset directory")
@@ -20,7 +19,6 @@ args = parser.parse_args()
 
 DATASET_DIR = Path(args.dataset).expanduser().resolve()
 API_BASE = args.api_base.rstrip("/")
-MANIFEST = DATASET_DIR / "images_manifest.csv"
 
 # =========================
 # 1. Authentication (Login)
@@ -91,39 +89,13 @@ def bids_path(img):
     return path / name
 
 # =========================
-# 4. API Crawl & Manifest Generation
+# 4 & 5. Stream Pipe: API Crawl Direct to Git-annex (No local CSV file)
 # =========================
+print("\nScanning LORIS API and ingesting directly into Git-annex via Stream Pipe...")
+
 projects = requests.get(f"{API_BASE}/projects", headers=HEADERS).json()["Projects"]
 
-print("\nScanning LORIS API and generating manifest...")
-new_entries = 0
-
-with open(MANIFEST, "w", newline="") as f:
-    writer = csv.DictWriter(f, fieldnames=["url", "target_path"])
-    writer.writeheader()
-
-    for project in projects:
-        images = requests.get(f"{API_BASE}/projects/{project}/images", headers=HEADERS).json()["Images"]
-
-        for img in images:
-            url = API_BASE + img["Link"]
-            url = url.replace("/candidates/", "/opencandidates/")
-            
-            target = bids_path(img)
-
-            writer.writerow({
-                "url": url,
-                "target_path": str(target)
-            })
-            new_entries += 1
-
-print(f"Generated manifest with {new_entries} images at {MANIFEST}")
-
-# =========================
-# 5. Git-annex Batch Ingestion via Stream Pipe
-# =========================
-print("\nIngesting URLs into Git-annex via Stream Pipe...")
-
+# start git-annex addurl 
 process = subprocess.Popen(
     ["git", "annex", "addurl", "--batch", "--with-files", "--fast", "--relaxed"],
     cwd=DATASET_DIR,
@@ -131,16 +103,26 @@ process = subprocess.Popen(
     text=True
 )
 
-with open(MANIFEST, 'r') as csv_file:
-    reader = csv.DictReader(csv_file)
-    for row in reader:
-        line = f"{row['url']} {row['target_path']}\n"
+new_entries = 0
+
+for project in projects:
+    images = requests.get(f"{API_BASE}/projects/{project}/images", headers=HEADERS).json()["Images"]
+
+    for img in images:
+        url = API_BASE + img["Link"]
+        url = url.replace("/candidates/", "/opencandidates/")
+        
+        target = bids_path(img)
+        
+        # write git-annex 
+        line = f"{url} {target}\n"
         process.stdin.write(line)
+        new_entries += 1
 
 process.stdin.close()
 process.wait()
 
-print("Ingestion complete via git-annex batch!")
+print(f"Stream ingestion complete! Registered {new_entries} URLs to Git-annex.")
 
 # =========================
 # 6. File Acquisition (Anti-Duplicate Version)
