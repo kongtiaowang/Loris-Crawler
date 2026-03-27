@@ -10,7 +10,7 @@ import getpass
 import sys
 
 # =========================
-# 0. Arguments and Path Setup
+# 0. Arguments and Path Setup      use: python3 phantom_crawler.py --dataset ./dataset --api-base https://phantom.loris.ca/api/v0.0.3
 # =========================
 parser = argparse.ArgumentParser(description="LORIS → DataLad/Git-annex (STABLE BATCH MODE)")
 parser.add_argument("--dataset", required=True, help="Path to the local DataLad dataset directory")
