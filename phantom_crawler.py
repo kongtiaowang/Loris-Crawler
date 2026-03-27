@@ -95,7 +95,7 @@ print("\nScanning LORIS API and ingesting directly into Git-annex via Stream Pip
 
 projects = requests.get(f"{API_BASE}/projects", headers=HEADERS).json()["Projects"]
 
-# 启动 git-annex addurl 子进程，准备接收内存管道输入
+# start git-annex addurl 
 process = subprocess.Popen(
     ["git", "annex", "addurl", "--batch", "--with-files", "--fast", "--relaxed"],
     cwd=DATASET_DIR,
@@ -114,12 +114,11 @@ for project in projects:
         
         target = bids_path(img)
         
-        # 直接写入 git-annex 子进程的 stdin，无需落地硬盘
+        # write git-annex 
         line = f"{url} {target}\n"
         process.stdin.write(line)
         new_entries += 1
 
-# 关闭管道输入，等待 git annex 记录完毕
 process.stdin.close()
 process.wait()
 
