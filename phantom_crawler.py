@@ -56,7 +56,6 @@ subprocess.run(
     check=True
 )
 
-# 确保 Git-annex 追踪大文件时，直接以真实文件（Unlocked）呈现，不转成 139 字节的快捷方式
 subprocess.run(
     ["git", "config", "annex.addunlocked", "true"],
     cwd=DATASET_DIR,
@@ -160,8 +159,6 @@ if args.get:
 # =========================
 print("\nSaving dataset changes to Git/DataLad...")
 
-# 🟢 修复处：移除了 DataLad 不支持的参数 --unlocked
-# 脚本已经在 第 2 步 通过 git config 保证了文件解锁状态，默认 save 即可。
 subprocess.run(
     ["datalad", "save", "-m", "Add public LORIS data via crawler"],
     cwd=DATASET_DIR,
