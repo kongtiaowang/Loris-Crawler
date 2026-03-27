@@ -149,11 +149,9 @@ if args.get:
     print("\n[Anti-Duplicate] Checking local physical files before downloading...")
     
     # Force git-annex to scan workspace to sync local untracked physical files to the ledger.
-    # This prevents git-annex from re-downloading existing files from the cloud.
     subprocess.run(["git", "annex", "fsck", "--fast"], cwd=DATASET_DIR)
 
     print("\nDownloading MISSING image files via DataLad...")
-    # Only get missing files, never re-download existing ones
     subprocess.run(["datalad", "get", "."], cwd=DATASET_DIR)
 
 # =========================
@@ -161,9 +159,8 @@ if args.get:
 # =========================
 print("\nSaving dataset changes to Git/DataLad...")
 
-# Instruct datalad save to keep files unlocked (as real files, not symlinks)
 subprocess.run(
-    ["datalad", "save", "-m", "Add public LORIS data via crawler", "--unlocked"],
+    ["datalad", "save", "-m", "Add public LORIS data via crawler"],
     cwd=DATASET_DIR,
     check=True
 )
@@ -190,4 +187,3 @@ print("    git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPO_NAME
 print("    git push -u origin main")
 print("    datalad push --to origin")
 print("-" * 60)
-
