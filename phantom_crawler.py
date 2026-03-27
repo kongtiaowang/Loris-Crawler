@@ -129,6 +129,8 @@ print(f"Stream ingestion complete! Registered {new_entries} URLs to Git-annex.")
 # =========================
 if args.get:
     print("\n[Anti-Duplicate] Checking local physical files before downloading...")
+    
+    # Force git-annex to scan workspace to sync local untracked physical files to the ledger.
     subprocess.run(["git", "annex", "fsck", "--fast"], cwd=DATASET_DIR)
 
     print("\nDownloading MISSING image files via DataLad...")
@@ -140,7 +142,7 @@ if args.get:
 print("\nSaving dataset changes to Git/DataLad...")
 
 subprocess.run(
-    ["datalad", "save", "-m", "Add public LORIS data via crawler directly in-memory"],
+    ["datalad", "save", "-m", "Add public LORIS data via crawler"],
     cwd=DATASET_DIR,
     check=True
 )
